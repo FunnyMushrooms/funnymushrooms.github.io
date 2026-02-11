@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cyber Skills Survey</title>
+  <meta name="color-scheme" content="dark" />
+  <link rel="stylesheet" href="./assets/app.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#07070a] text-white min-h-screen">
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="glow glow-blue"></div>
+    <div class="glow glow-red"></div>
+    <div class="glow glow-brown"></div>
+  </div>
+
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#07070a]/70 border-b border-white/10">
+    <div class="mx-auto max-w-6xl px-4 py-4 flex items-center gap-3">
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-[#0C5394] via-[#990001] to-[#5B0F00] shadow-lg"></div>
+      <div>
+        <div class="font-extrabold leading-tight">Cyber Skills Survey</div>
+        <div class="text-xs text-white/60">TeamLead → Engineer radar • GitHub Pages</div>
+      </div>
+      <div class="ml-auto flex gap-2">
+        <a class="btn" href="./survey.html">Start survey</a>
+        <a class="btn" href="./dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-10">
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <div class="text-2xl font-extrabold">What this site does</div>
+        <p class="text-white/70 mt-2 leading-relaxed">
+          TeamLeaders fill a survey for each engineer. The app computes axis totals and slice bias (Scenario / SOC / Pentest)
+          from question tags, then renders a radar chart. You can export JSON, upload it later, edit marks, and re-download the chart PNG.
+        </p>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <span class="pill">Dark mode UX</span>
+          <span class="pill">Radar chart</span>
+          <span class="pill">Export / Import JSON</span>
+          <span class="pill">PNG download</span>
+          <span class="pill">No build step</span>
+        </div>
+
+        <div class="mt-6 flex gap-2">
+          <a class="btn-primary" href="./survey.html">Fill a new engineer</a>
+          <a class="btn" href="./dashboard.html">Manage results</a>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <div class="text-lg font-bold">Recommended flow</div>
+        <ol class="mt-3 space-y-2 text-white/75 list-decimal list-inside">
+          <li>Open <b>Survey</b> and rate one engineer.</li>
+          <li>Go to <b>Report</b>, download radar as PNG.</li>
+          <li>Export JSON and store it.</li>
+          <li>In <b>Dashboard</b>, import many JSONs to compare and edit later.</li>
+        </ol>
+
+        <div class="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-sm font-bold">Scoring anchors</div>
+          <div class="text-sm text-white/70 mt-2">
+            1 = no evidence • 3 = with guidance • 5 = independent • 7 = strong/mentors • 10 = expert/sets standards
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
