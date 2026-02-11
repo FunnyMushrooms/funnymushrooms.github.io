@@ -23,9 +23,11 @@
         <div class="font-extrabold leading-tight">Cyber Skills Survey</div>
         <div class="text-xs text-white/60">TeamLead → Engineer radar • GitHub Pages</div>
       </div>
-      <div class="ml-auto flex gap-2">
+      <div class="ml-auto flex gap-2 flex-wrap">
         <a class="btn" href="./survey.html">Start survey</a>
         <a class="btn" href="./dashboard.html">Dashboard</a>
+        <a class="btn" href="./compare.html">Compare</a>
+        <a class="btn" href="./teams.html">Teams</a>
       </div>
     </div>
   </header>
@@ -35,32 +37,30 @@
       <div class="card p-6">
         <div class="text-2xl font-extrabold">What this site does</div>
         <p class="text-white/70 mt-2 leading-relaxed">
-          TeamLeaders fill a survey for each engineer. The app computes axis totals and slice bias (Scenario / SOC / Pentest)
-          from question tags, then renders a radar chart. You can export JSON, upload it later, edit marks, and re-download the chart PNG.
+          TeamLeaders rate engineers. The system computes axis totals + internal bias (Scenario/SOC/Pentest tags),
+          draws a radar chart, lets you export/import JSON, download PNG, and generate a PDF report.
         </p>
 
         <div class="mt-6 flex flex-wrap gap-2">
           <span class="pill">Dark mode UX</span>
-          <span class="pill">Radar chart</span>
-          <span class="pill">Export / Import JSON</span>
-          <span class="pill">PNG download</span>
-          <span class="pill">No build step</span>
+          <span class="pill">N/A supported</span>
+          <span class="pill">Radar PNG</span>
+          <span class="pill">PDF report</span>
+          <span class="pill">Teams + compare</span>
         </div>
 
-        <div class="mt-6 flex gap-2">
+        <div class="mt-6 flex gap-2 flex-wrap">
           <a class="btn-primary" href="./survey.html">Fill a new engineer</a>
           <a class="btn" href="./dashboard.html">Manage results</a>
         </div>
       </div>
 
       <div class="card p-6">
-        <div class="text-lg font-bold">Recommended flow</div>
-        <ol class="mt-3 space-y-2 text-white/75 list-decimal list-inside">
-          <li>Open <b>Survey</b> and rate one engineer.</li>
-          <li>Go to <b>Report</b>, download radar as PNG.</li>
-          <li>Export JSON and store it.</li>
-          <li>In <b>Dashboard</b>, import many JSONs to compare and edit later.</li>
-        </ol>
+        <div class="text-lg font-bold">Storage model</div>
+        <p class="text-white/70 mt-2 leading-relaxed">
+          Data is stored in <b>browser localStorage</b>. Export JSON to share or backup.
+          Dashboard supports drag & drop import and “Backup all”.
+        </p>
 
         <div class="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <div class="text-sm font-bold">Scoring anchors</div>
