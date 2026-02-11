@@ -1,11 +1,10 @@
 import { AXES } from "./questions.js";
-import { loadAll, saveAll, getCurrentId, setCurrentId, upsert } from "./storage.js";
+import { loadAllAssessments, saveAllAssessments, loadTeams, getCurrentId, setCurrentId, upsert } from "./storage.js";
 import { makeBlankAssessment, compute } from "./compute.js";
 import { el, tagClass, btnToggle, downloadJson } from "./ui.js";
 
-let assessments = loadAll();
-let currentId = getCurrentId();
-let current = assessments.find(a => a.id === currentId) || null;
+let assessments = loadAllAssessments();
+let teams = loadTeams();
 
 const qs = (id) => document.getElementById(id);
 
@@ -19,15 +18,35 @@ const engName = qs("engName");
 const engRole = qs("engRole");
 const engPeriod = qs("engPeriod");
 const engNotes = qs("engNotes");
+const engTeam = qs("engTeam");
 
 const btnNew = qs("btnNew");
 const btnExport = qs("btnExport");
 const fileImport = qs("fileImport");
 const btnDownloadPng = qs("btnDownloadPng");
+const btnReport = qs("btnReport");
 const overlayToggles = qs("overlayToggles");
 
 let activeAxisId = "windows";
 let chart = null;
+
+const overlayState = {
+  Overall: true,
+  Scenario: true,
+  SOC: true,
+  Pentest: true,
+  Team: false,
+  Comms: false,
+  English: false,
+};
+
+function getQueryId() {
+  const id = new URLSearchParams(location.search).get("id");
+  return id || "";
+}
+
+let currentId = getQueryId() || getCurrentId();
+let current = assessments.find(a => a.id === currentId) || null;
 
 function ensureCurrent() {
   if (!current) {
@@ -42,13 +61,15 @@ function ensureCurrent() {
 function persist() {
   current.updatedAt = new Date().toISOString();
   assessments = upsert(assessments, current);
-  saveAll(assessments);
+  saveAllAssessments(assessments);
   setCurrentId(current.id);
   savedAt.textContent = "Saved " + new Date().toLocaleTimeString();
+  btnReport.href = `./report.html?id=${encodeURIComponent(current.id)}`;
+  history.replaceState(null, "", `./survey.html?id=${encodeURIComponent(current.id)}`);
 }
 
-function setAnswer(qid, val) {
-  current.answers[qid] = Math.max(1, Math.min(10, Number(val) || 1));
+function setAnswer(qid, valOrNull) {
+  current.answers[qid] = valOrNull === null ? null : Math.max(1, Math.min(10, Number(valOrNull) || 1));
   persist();
   renderAxis();
   renderChart();
@@ -63,16 +84,30 @@ function renderTabs() {
   });
 }
 
+function renderTeamsSelect() {
+  teams = loadTeams();
+  engTeam.innerHTML = `<option value="">(no team)</option>`;
+  teams.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.name;
+    engTeam.appendChild(opt);
+  });
+  engTeam.value = current.engineer.teamId || "";
+}
+
 function renderProfile() {
   engName.value = current.engineer.name || "";
   engRole.value = current.engineer.role || "";
   engPeriod.value = current.engineer.period || "";
   engNotes.value = current.notes || "";
+  renderTeamsSelect();
 
   const sync = () => {
     current.engineer.name = engName.value.trim();
     current.engineer.role = engRole.value.trim();
     current.engineer.period = engPeriod.value.trim();
+    current.engineer.teamId = engTeam.value || "";
     current.notes = engNotes.value;
     persist();
     renderChart();
@@ -82,9 +117,10 @@ function renderProfile() {
   engRole.oninput = sync;
   engPeriod.oninput = sync;
   engNotes.oninput = sync;
+  engTeam.onchange = sync;
 }
 
-function questionCard(axis, q, idx) {
+function questionCard(q, idx) {
   const card = el("div", "card p-4");
   const top = el("div", "flex items-start justify-between gap-4");
   const left = el("div", "space-y-2");
@@ -96,21 +132,38 @@ function questionCard(axis, q, idx) {
 
   left.appendChild(el("div", "text-sm text-white/80 leading-relaxed", q.text));
 
-  const right = el("div", "w-64 max-w-[45%] space-y-2");
-  const value = current.answers[q.id] ?? 5;
+  const right = el("div", "w-72 max-w-[48%] space-y-2");
+
+  const v = current.answers[q.id];
+  const isNA = v === null;
+
+  const naRow = el("label", "flex items-center gap-2 text-xs text-white/60");
+  const cb = el("input", "");
+  cb.type = "checkbox";
+  cb.checked = isNA;
+  naRow.appendChild(cb);
+  naRow.appendChild(el("span", "", "N/A"));
+  right.appendChild(naRow);
 
   const row = el("div", "flex items-center gap-3");
   const slider = el("input", "w-full");
   slider.type = "range";
   slider.min = "1";
   slider.max = "10";
-  slider.value = String(value);
+  slider.value = String(isNA ? 5 : (v ?? 5));
+  slider.disabled = isNA;
 
   const num = el("input", "input w-16 text-center font-extrabold");
-  num.value = String(value);
+  num.value = String(isNA ? "" : (v ?? 5));
+  num.disabled = isNA;
+
+  cb.onchange = () => {
+    if (cb.checked) setAnswer(q.id, null);
+    else setAnswer(q.id, 5);
+  };
 
   slider.oninput = () => { num.value = slider.value; setAnswer(q.id, slider.value); };
-  num.onchange = () => { slider.value = String(num.value); setAnswer(q.id, num.value); };
+  num.onchange = () => { slider.value = String(num.value || 5); setAnswer(q.id, num.value || 5); };
 
   row.appendChild(slider);
   row.appendChild(num);
@@ -119,23 +172,35 @@ function questionCard(axis, q, idx) {
   top.appendChild(left);
   top.appendChild(right);
   card.appendChild(top);
-
   return card;
 }
 
 function renderAxis() {
   const axis = AXES.find(a => a.id === activeAxisId) || AXES[0];
-
   axisTitle.textContent = axis.name;
   questionsWrap.innerHTML = "";
 
-  axis.questions.forEach((q, idx) => {
-    questionsWrap.appendChild(questionCard(axis, q, idx));
-  });
+  axis.questions.forEach((q, idx) => questionsWrap.appendChild(questionCard(q, idx)));
 
   const c = compute(current);
   const ax = c.axisOverall.find(x => x.axisId === axis.id);
-  axisScore.textContent = `${ax.total}/100 • ${ax.mean}/10`;
+
+  const total = ax.total == null ? "N/A" : `${ax.total}/100`;
+  const mean = ax.mean == null ? "N/A" : `${ax.mean}/10`;
+  axisScore.textContent = `${mean} • ${total} • answered ${ax.answeredCount}/10`;
+}
+
+function renderOverlayToggles() {
+  overlayToggles.innerHTML = "";
+  Object.keys(overlayState).forEach(k => {
+    const b = btnToggle(k, overlayState[k]);
+    b.onclick = () => {
+      overlayState[k] = !overlayState[k];
+      renderOverlayToggles();
+      renderChart();
+    };
+    overlayToggles.appendChild(b);
+  });
 }
 
 function initChart() {
@@ -146,6 +211,7 @@ function initChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      spanGaps: true,
       scales: {
         r: {
           suggestedMin: 0,
@@ -170,27 +236,8 @@ function initChart() {
   });
 }
 
-const overlayState = {
-  Overall: true,
-  Scenario: true,
-  SOC: true,
-  Pentest: true,
-  Team: false,
-  Comms: false,
-  English: false,
-};
-
-function renderOverlayToggles() {
-  overlayToggles.innerHTML = "";
-  Object.keys(overlayState).forEach(k => {
-    const b = btnToggle(k, overlayState[k]);
-    b.onclick = () => {
-      overlayState[k] = !overlayState[k];
-      renderOverlayToggles();
-      renderChart();
-    };
-    overlayToggles.appendChild(b);
-  });
+function ds(label, data, stroke, fill) {
+  return { label, data, borderColor: stroke, backgroundColor: fill, borderWidth: 2, pointRadius: 2, pointHoverRadius: 3, spanGaps: true };
 }
 
 function renderChart() {
@@ -211,44 +258,36 @@ function renderChart() {
   chart.update();
 }
 
-function ds(label, data, stroke, fill) {
-  return {
-    label,
-    data,
-    borderColor: stroke,
-    backgroundColor: fill,
-    borderWidth: 2,
-    pointRadius: 2,
-    pointHoverRadius: 3,
-    spanGaps: true,
+function exportJson() {
+  const computed = compute(current);
+  const payload = {
+    ...current,
+    computed,
+    schema: { axes: AXES.map(ax => ({ id: ax.id, name: ax.name, questions: ax.questions.map(q => ({ id: q.id, tag: q.tag, text: q.text })) })) },
   };
+  downloadJson(`${(current.engineer.name || "engineer").replace(/\s+/g, "_")}_assessment.json`, payload);
 }
 
 async function handleImport(file) {
   const text = await file.text();
   const data = JSON.parse(text);
-
-  // accept raw or exported payload
   const blank = makeBlankAssessment();
+
   const imported = {
-    version: 1,
+    version: 2,
     id: data.id || (crypto?.randomUUID?.() ?? String(Date.now())),
     createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    engineer: data.engineer || blank.engineer,
+    engineer: { ...blank.engineer, ...(data.engineer || {}) },
     notes: data.notes || "",
-    answers: data.answers || blank.answers,
+    answers: { ...blank.answers, ...(data.answers || {}) },
   };
-
-  // ensure all qids exist
-  for (const k of Object.keys(blank.answers)) {
-    if (imported.answers[k] === undefined) imported.answers[k] = blank.answers[k];
-  }
 
   current = imported;
   assessments = upsert(assessments, current);
   currentId = current.id;
   persist();
+  renderTeamsSelect();
   renderProfile();
   renderAxis();
   renderChart();
@@ -260,22 +299,6 @@ function downloadPng() {
   a.href = url;
   a.download = `${(current.engineer.name || "engineer").replace(/\s+/g, "_")}_radar.png`;
   a.click();
-}
-
-function exportJson() {
-  const computed = compute(current);
-  const payload = {
-    ...current,
-    computed,
-    schema: {
-      axes: AXES.map(ax => ({
-        id: ax.id,
-        name: ax.name,
-        questions: ax.questions.map(q => ({ id: q.id, tag: q.tag, text: q.text })),
-      })),
-    },
-  };
-  downloadJson(`${(current.engineer.name || "engineer").replace(/\s+/g, "_")}_assessment.json`, payload);
 }
 
 // Boot
@@ -307,3 +330,8 @@ fileImport.onchange = async (e) => {
   await handleImport(f);
   e.target.value = "";
 };
+
+// Refresh team list when returning from teams page
+window.addEventListener("focus", () => {
+  renderTeamsSelect();
+});
