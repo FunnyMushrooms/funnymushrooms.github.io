@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Survey • Cyber Skills</title>
+  <meta name="color-scheme" content="dark" />
+  <link rel="stylesheet" href="./assets/app.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="bg-[#07070a] text-white min-h-screen">
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="glow glow-blue"></div>
+    <div class="glow glow-red"></div>
+    <div class="glow glow-brown"></div>
+  </div>
+
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#07070a]/70 border-b border-white/10">
+    <div class="mx-auto max-w-7xl px-4 py-4 flex items-center gap-3">
+      <a href="./index.html" class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-[#0C5394] via-[#990001] to-[#5B0F00] shadow-lg"></div>
+        <div>
+          <div class="font-extrabold leading-tight">Survey</div>
+          <div class="text-xs text-white/60">TeamLead → Engineer</div>
+        </div>
+      </a>
+
+      <nav class="ml-auto flex flex-wrap items-center gap-2">
+        <button id="btnNew" class="btn">New engineer</button>
+        <button id="btnExport" class="btn">Export JSON</button>
+        <label class="btn cursor-pointer">
+          Import JSON
+          <input id="fileImport" type="file" accept="application/json" class="hidden" />
+        </label>
+        <a class="btn" href="./dashboard.html">Dashboard</a>
+      </nav>
+    </div>
+
+    <div class="mx-auto max-w-7xl px-4 pb-3">
+      <div id="axisTabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-6 grid lg:grid-cols-12 gap-6">
+    <aside class="lg:col-span-4 space-y-6">
+      <section class="card p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-lg font-bold">Engineer profile</div>
+            <div class="text-sm text-white/60">One submission per engineer</div>
+          </div>
+          <span id="savedAt" class="pill">Saved —</span>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <label class="block">
+            <div class="label">Engineer name</div>
+            <input id="engName" class="input" placeholder="e.g., Ivan Petrenko" />
+          </label>
+          <label class="block">
+            <div class="label">Role</div>
+            <input id="engRole" class="input" placeholder="Scenario / SOC / PT / Mixed" />
+          </label>
+          <label class="block">
+            <div class="label">Evaluation period</div>
+            <input id="engPeriod" class="input" placeholder="e.g., last 6 weeks" />
+          </label>
+          <label class="block">
+            <div class="label">Notes</div>
+            <textarea id="engNotes" class="input min-h-[90px]" placeholder="Evidence, examples, context…"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="card p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-lg font-bold">Report preview</div>
+            <div class="text-sm text-white/60">Live radar + download</div>
+          </div>
+          <button id="btnDownloadPng" class="btn">Download PNG</button>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3">
+          <div class="h-[320px]">
+            <canvas id="radar"></canvas>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2" id="overlayToggles"></div>
+      </section>
+    </aside>
+
+    <section class="lg:col-span-8 space-y-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div id="axisTitle" class="text-xl font-extrabold">—</div>
+            <div class="text-sm text-white/60">10 questions • tags show Scenario/SOC/PT bias</div>
+          </div>
+          <span id="axisScore" class="pill">—</span>
+        </div>
+      </div>
+
+      <div id="questions" class="space-y-4"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/survey.js"></script>
+</body>
+</html>
