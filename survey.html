@@ -17,7 +17,7 @@
     <div class="glow glow-brown"></div>
   </div>
 
-  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#07070a]/70 border-b border-white/10">
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#07070a]/70 border-b border-white/10 no-print">
     <div class="mx-auto max-w-7xl px-4 py-4 flex items-center gap-3">
       <a href="./index.html" class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-[#0C5394] via-[#990001] to-[#5B0F00] shadow-lg"></div>
@@ -34,6 +34,7 @@
           Import JSON
           <input id="fileImport" type="file" accept="application/json" class="hidden" />
         </label>
+        <a id="btnReport" class="btn" href="./report.html">Report</a>
         <a class="btn" href="./dashboard.html">Dashboard</a>
       </nav>
     </div>
@@ -67,6 +68,17 @@
             <div class="label">Evaluation period</div>
             <input id="engPeriod" class="input" placeholder="e.g., last 6 weeks" />
           </label>
+
+          <label class="block">
+            <div class="label">Team</div>
+            <div class="flex gap-2">
+              <select id="engTeam" class="input">
+                <option value="">(no team)</option>
+              </select>
+              <a class="btn" href="./teams.html">Manage</a>
+            </div>
+          </label>
+
           <label class="block">
             <div class="label">Notes</div>
             <textarea id="engNotes" class="input min-h-[90px]" placeholder="Evidence, examples, context…"></textarea>
@@ -75,10 +87,10 @@
       </section>
 
       <section class="card p-5">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3">
           <div>
-            <div class="text-lg font-bold">Report preview</div>
-            <div class="text-sm text-white/60">Live radar + download</div>
+            <div class="text-lg font-bold">Radar preview</div>
+            <div class="text-sm text-white/60">N/A creates gaps</div>
           </div>
           <button id="btnDownloadPng" class="btn">Download PNG</button>
         </div>
@@ -98,7 +110,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <div id="axisTitle" class="text-xl font-extrabold">—</div>
-            <div class="text-sm text-white/60">10 questions • tags show Scenario/SOC/PT bias</div>
+            <div class="text-sm text-white/60">10 questions • use N/A if truly not applicable</div>
           </div>
           <span id="axisScore" class="pill">—</span>
         </div>
