@@ -22,12 +22,15 @@
         <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-[#0C5394] via-[#990001] to-[#5B0F00] shadow-lg"></div>
         <div>
           <div class="font-extrabold leading-tight">Dashboard</div>
-          <div class="text-xs text-white/60">Manage engineers • import/export/edit</div>
+          <div class="text-xs text-white/60">Import / compare / delete</div>
         </div>
       </a>
 
       <nav class="ml-auto flex flex-wrap items-center gap-2">
         <a class="btn" href="./survey.html">New survey</a>
+        <a class="btn" href="./compare.html">Compare</a>
+        <a class="btn" href="./teams.html">Teams</a>
+        <button id="btnExportBackup" class="btn">Backup all (JSON)</button>
         <label class="btn cursor-pointer">
           Import JSON(s)
           <input id="fileImportMany" type="file" accept="application/json" multiple class="hidden" />
@@ -39,8 +42,31 @@
   <main class="mx-auto max-w-7xl px-4 py-6 grid lg:grid-cols-12 gap-6">
     <aside class="lg:col-span-4 space-y-4">
       <section class="card p-5">
-        <div class="text-lg font-bold">Stored assessments</div>
-        <div class="text-sm text-white/60">Click to open report or edit marks</div>
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-lg font-bold">Assessments</div>
+            <div class="text-sm text-white/60">Select • compare • delete</div>
+          </div>
+          <button id="btnDeleteSelected" class="btn-danger" disabled>Delete selected</button>
+        </div>
+
+        <div class="mt-4">
+          <div id="dropzone" class="dropzone">
+            <div class="font-extrabold">Drag & drop JSON files here</div>
+            <div class="text-sm text-white/60 mt-1">Or use “Import JSON(s)” button</div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="label">Filter by team</div>
+          <select id="teamFilter" class="input">
+            <option value="">All teams</option>
+          </select>
+        </div>
+
+        <div class="mt-4">
+          <button id="btnCompareSelected" class="btn w-full" disabled>Compare selected</button>
+        </div>
 
         <div id="list" class="mt-4 space-y-2"></div>
       </section>
@@ -53,9 +79,11 @@
             <div id="detailName" class="text-xl font-extrabold">(select an engineer)</div>
             <div id="detailMeta" class="text-sm text-white/60">—</div>
           </div>
-          <div class="flex gap-2">
-            <button id="btnExportOne" class="btn" disabled>Export JSON</button>
+          <div class="flex gap-2 flex-wrap">
+            <a id="btnReport" class="btn" href="./report.html" aria-disabled="true">Report</a>
             <a id="btnEdit" class="btn" href="./survey.html" aria-disabled="true">Edit</a>
+            <button id="btnExportOne" class="btn" disabled>Export JSON</button>
+            <button id="btnDeleteOne" class="btn-danger" disabled>Delete</button>
           </div>
         </div>
 
@@ -64,7 +92,7 @@
 
       <section class="card p-5">
         <div class="text-lg font-bold">Axis summary</div>
-        <div class="text-sm text-white/60">Totals + hidden slice averages (from question tags)</div>
+        <div class="text-sm text-white/60">Totals are normalized to /100 even if some are N/A</div>
 
         <div class="mt-4 overflow-x-auto">
           <table class="min-w-full text-sm">
