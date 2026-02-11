@@ -157,4 +157,116 @@ function renderDetails() {
 
   btnExportOne.disabled = false;
   btnDeleteOne.disabled = false;
-  btnEdit.href = `./survey.ht
+  btnEdit.href = `./survey.html?id=${encodeURIComponent(selected.id)}`;
+  btnReport.href = `./report.html?id=${encodeURIComponent(selected.id)}`;
+  btnEdit.setAttribute("aria-disabled", "false");
+  btnReport.setAttribute("aria-disabled", "false");
+}
+
+btnExportOne.onclick = () => {
+  if (!selected) return;
+  const computed = compute(selected);
+  const payload = {
+    ...selected,
+    computed,
+    schema: { axes: AXES.map(ax => ({ id: ax.id, name: ax.name, questions: ax.questions.map(q => ({ id:q.id, tag:q.tag, text:q.text })) })) },
+  };
+  downloadJson(`${(selected.engineer.name || "engineer").replace(/\s+/g, "_")}_assessment.json`, payload);
+};
+
+btnDeleteOne.onclick = () => {
+  if (!selected) return;
+  const ok = confirm(`Delete assessment for "${selected.engineer?.name || "unnamed"}"?`);
+  if (!ok) return;
+  assessments = removeById(assessments, selected.id);
+  saveAllAssessments(assessments);
+  selectedSet.delete(selected.id);
+  selected = null;
+  renderList(); renderDetails(); updateSelectionButtons();
+};
+
+btnCompareSelected.onclick = () => {
+  const ids = Array.from(selectedSet);
+  if (ids.length < 2) return;
+  location.href = `./compare.html?ids=${encodeURIComponent(ids.join(","))}`;
+};
+
+btnDeleteSelected.onclick = () => {
+  const ids = Array.from(selectedSet);
+  if (!ids.length) return;
+  const ok = confirm(`Delete ${ids.length} selected assessments?`);
+  if (!ok) return;
+  assessments = assessments.filter(a => !selectedSet.has(a.id));
+  saveAllAssessments(assessments);
+  selectedSet.clear();
+  selected = null;
+  renderList(); renderDetails(); updateSelectionButtons();
+};
+
+btnExportBackup.onclick = () => {
+  downloadJson(`cyber_skills_backup_${new Date().toISOString().slice(0,10)}.json`, exportBackupPayload());
+};
+
+async function importMany(files) {
+  for (const f of files) {
+    const text = await f.text();
+    try {
+      const data = JSON.parse(text);
+
+      // If it's a backup, merge it (simple approach: replace all)
+      if (Array.isArray(data?.assessments) && Array.isArray(data?.teams)) {
+        // Replace store entirely
+        localStorage.setItem("cyber_survey_assessments_v2", JSON.stringify(data.assessments));
+        localStorage.setItem("cyber_survey_teams_v1", JSON.stringify(data.teams));
+        assessments = loadAllAssessments();
+        teams = loadTeams();
+        continue;
+      }
+
+      const imported = {
+        version: 2,
+        id: data.id || (crypto?.randomUUID?.() ?? String(Date.now())),
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        engineer: data.engineer || { name:"", role:"", period:"", teamId:"", mainDirection:"", additionalDirection:[], domains:[] },
+        notes: data.notes || "",
+        answers: data.answers || {},
+      };
+      assessments = upsert(assessments, imported);
+    } catch {
+      // ignore invalid
+    }
+  }
+  saveAllAssessments(assessments);
+  renderTeamFilter();
+  renderList();
+  renderDetails();
+}
+
+fileImportMany.onchange = async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  await importMany(files);
+  e.target.value = "";
+};
+
+// Drag & drop
+dropzone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  const files = Array.from(e.dataTransfer.files || []).filter(f => f.name.endsWith(".json"));
+  if (files.length) await importMany(files);
+});
+
+teamFilter.onchange = () => renderList();
+
+// boot
+renderTeamFilter();
+renderList();
+renderDetails();
+updateSelectionButtons();
